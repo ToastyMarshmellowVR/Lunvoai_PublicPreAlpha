@@ -1,56 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lunvo AI - Public Pre-Alpha</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #e0f7fa; /* light teal */
+    color: #004d40; /* dark teal */
+    text-align: center;
+    margin: 0;
+    padding: 0;
+  }
+  h1 {
+    padding: 20px;
+  }
+  #chat-box {
+    width: 80%;
+    height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    background: white;
+    margin: auto;
+    text-align: left;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  }
+  #input-area {
+    margin: 15px auto;
+    width: 80%;
+    display: flex;
+    gap: 5px;
+  }
+  #user-input {
+    flex: 1;
+    padding: 10px;
+    font-size: 14px;
+  }
+  #send-btn {
+    padding: 10px 20px;
+    background-color: #ffeb3b; /* yellow */
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  #send-btn:hover {
+    background-color: #fdd835;
+  }
+</style>
+</head>
+<body>
+
+<h1>💠 Lunvo AI - Public Pre-Alpha</h1>
+
+<div id="chat-box"></div>
+
+<div id="input-area">
+  <input id="user-input" type="text" placeholder="Type your message here..." />
+  <button id="send-btn">Send</button>
+</div>
+
 <script>
   const chatBox = document.getElementById('chat-box');
   const userInput = document.getElementById('user-input');
   const sendBtn = document.getElementById('send-btn');
 
-  // List of words to block (lowercase only)
-  const bannedWords = ["fuck", "shit", "bitch", "asshole", "damn"]; 
-
-  function cleanMessage(text) {
-    let words = text.split(/\s+/);
-    return words
-      .map(word => bannedWords.includes(word.toLowerCase()) ? "" : word)
-      .join(" ")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-
   function sendMessage() {
-    let message = userInput.value.trim();
-    if (message === '') return;
+    const message = userInput.value.trim();
+    if (!message) return;
 
-    // Clean swears before showing
-    message = cleanMessage(message);
-    if (message === '') return; // don't send empty after cleaning
-
-    // Show user message
+    // Add user's message
     chatBox.innerHTML += `<div><strong>You:</strong> ${message}</div>`;
-
-    // Placeholder response
-    const placeholderResponse = getLunvoResponse(message);
-
-    // Typing effect
-    typeMessage("Lunvo", placeholderResponse, 40);
-
-    chatBox.scrollTop = chatBox.scrollHeight;
     userInput.value = '';
+
+    // Scroll down
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Generate placeholder reply
+    const reply = getLunvoResponse(message);
+    typeMessage("Lunvo", reply, 30);
   }
 
   function getLunvoResponse(input) {
-    return "Okay, I understood that! (Placeholder until AI is connected.)";
+    return "Got it! This is just a placeholder response until the AI is connected.";
   }
 
   function typeMessage(sender, text, speed) {
     let index = 0;
     const messageDiv = document.createElement('div');
-    messageDiv.innerHTML = `<strong>${sender}:</strong> <span id="typing"></span>`;
+    const span = document.createElement('span');
+    messageDiv.innerHTML = `<strong>${sender}:</strong> `;
+    messageDiv.appendChild(span);
     chatBox.appendChild(messageDiv);
 
     function typeChar() {
       if (index < text.length) {
-        messageDiv.querySelector('#typing').textContent += text.charAt(index);
+        span.textContent += text.charAt(index);
         index++;
         setTimeout(typeChar, speed);
+        chatBox.scrollTop = chatBox.scrollHeight;
       }
     }
     typeChar();
@@ -60,10 +109,13 @@
   sendBtn.addEventListener('click', sendMessage);
 
   // Enter key
-  userInput.addEventListener('keypress', function (e) {
+  userInput.addEventListener('keypress', e => {
     if (e.key === 'Enter') {
       e.preventDefault();
       sendMessage();
     }
   });
 </script>
+
+</body>
+</html>
