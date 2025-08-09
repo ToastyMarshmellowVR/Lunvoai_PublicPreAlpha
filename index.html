@@ -1,152 +1,69 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Lunvo AI - Public Pre-Alpha</title>
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        background-color: #e0f7fa;
-        color: #004d40;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 20px;
-    }
-    h1 {
-        color: #009688;
-    }
-    #chat-box {
-        width: 80%;
-        max-width: 800px;
-        height: 500px;
-        overflow-y: auto;
-        background: white;
-        border-radius: 12px;
-        padding: 10px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .message {
-        margin: 5px 0;
-    }
-    .user {
-        color: #0288d1;
-        font-weight: bold;
-    }
-    .lunvo {
-        color: #fbc02d;
-        font-weight: bold;
-    }
-    #input-box {
-        display: flex;
-        margin-top: 10px;
-        width: 80%;
-        max-width: 800px;
-    }
-    input {
-        flex: 1;
-        padding: 10px;
-        border: none;
-        border-radius: 8px 0 0 8px;
-        outline: none;
-    }
-    button {
-        padding: 10px 20px;
-        border: none;
-        background: #009688;
-        color: white;
-        font-weight: bold;
-        border-radius: 0 8px 8px 0;
-        cursor: pointer;
-    }
-    button:hover {
-        background: #00796b;
-    }
-</style>
-</head>
-<body>
-
-<h1>💬 Lunvo AI - Public Pre-Alpha</h1>
-<div id="chat-box"></div>
-
-<div id="input-box">
-    <input type="text" id="user-input" placeholder="Type your message... (use /name to set your name)">
-    <button onclick="sendMessage()">Send</button>
-</div>
-
 <script>
-let username = localStorage.getItem("lunvo_username") || "User";
-let chatHistory = JSON.parse(localStorage.getItem("lunvo_chatHistory") || "[]");
-const swearWords = ["fuck","shit","bitch","asshole","nigger","faggot"]; // just ignore
+  const chatBox = document.getElementById('chat-box');
+  const userInput = document.getElementById('user-input');
+  const sendBtn = document.getElementById('send-btn');
 
-function saveChat() {
-    localStorage.setItem("lunvo_chatHistory", JSON.stringify(chatHistory));
-}
+  // List of words to block (lowercase only)
+  const bannedWords = ["fuck", "shit", "bitch", "asshole", "damn"]; 
 
-function renderChat() {
-    const chatBox = document.getElementById("chat-box");
-    chatBox.innerHTML = "";
-    chatHistory.forEach(msg => {
-        const div = document.createElement("div");
-        div.classList.add("message");
-        div.innerHTML = `<span class="${msg.sender}">${msg.sender === "user" ? username : "Lunvo"}:</span> ${msg.text}`;
-        chatBox.appendChild(div);
-    });
+  function cleanMessage(text) {
+    let words = text.split(/\s+/);
+    return words
+      .map(word => bannedWords.includes(word.toLowerCase()) ? "" : word)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function sendMessage() {
+    let message = userInput.value.trim();
+    if (message === '') return;
+
+    // Clean swears before showing
+    message = cleanMessage(message);
+    if (message === '') return; // don't send empty after cleaning
+
+    // Show user message
+    chatBox.innerHTML += `<div><strong>You:</strong> ${message}</div>`;
+
+    // Placeholder response
+    const placeholderResponse = getLunvoResponse(message);
+
+    // Typing effect
+    typeMessage("Lunvo", placeholderResponse, 40);
+
     chatBox.scrollTop = chatBox.scrollHeight;
-}
+    userInput.value = '';
+  }
 
-function sendMessage() {
-    let input = document.getElementById("user-input").value.trim();
-    if (!input) return;
+  function getLunvoResponse(input) {
+    return "Okay, I understood that! (Placeholder until AI is connected.)";
+  }
 
-    // Command to set name
-    if (input.startsWith("/name ")) {
-        username = input.substring(6).trim();
-        localStorage.setItem("lunvo_username", username);
-        chatHistory.push({sender:"lunvo", text:`Got it! I’ll call you ${username} from now on.`});
-        saveChat();
-        renderChat();
-        document.getElementById("user-input").value = "";
-        return;
+  function typeMessage(sender, text, speed) {
+    let index = 0;
+    const messageDiv = document.createElement('div');
+    messageDiv.innerHTML = `<strong>${sender}:</strong> <span id="typing"></span>`;
+    chatBox.appendChild(messageDiv);
+
+    function typeChar() {
+      if (index < text.length) {
+        messageDiv.querySelector('#typing').textContent += text.charAt(index);
+        index++;
+        setTimeout(typeChar, speed);
+      }
     }
+    typeChar();
+  }
 
-    // Remove swears completely
-    swearWords.forEach(word => {
-        const regex = new RegExp(`\\b${word}\\b`, "gi");
-        input = input.replace(regex, "");
-    });
+  // Button click
+  sendBtn.addEventListener('click', sendMessage);
 
-    chatHistory.push({sender:"user", text:input});
-    saveChat();
-    renderChat();
-    document.getElementById("user-input").value = "";
-
-    // Simulate Lunvo typing
-    setTimeout(() => {
-        let reply = fakeAIResponse(input);
-        chatHistory.push({sender:"lunvo", text:reply});
-        saveChat();
-        renderChat();
-    }, Math.random() * 800 + 500);
-}
-
-function fakeAIResponse(msg) {
-    const lower = msg.toLowerCase();
-    if (lower.includes("hello") || lower.includes("hi")) {
-        return `Hey ${username}! How’s your day going?`;
+  // Enter key
+  userInput.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      sendMessage();
     }
-    if (lower.includes("how are you")) {
-        return `I’m doing great, thanks for asking ${username}!`;
-    }
-    if (lower.includes("what is your name")) {
-        return "I’m Lunvo — your friendly offline AI assistant.";
-    }
-    return "Interesting… tell me more!";
-}
-
-// Load saved chat
-renderChat();
+  });
 </script>
-
-</body>
-</html>
