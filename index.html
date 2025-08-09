@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lunvo AI - Public Pre-Alpha</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #e0f7fa;
+        color: #004d40;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+    }
+    h1 {
+        color: #009688;
+    }
+    #chat-box {
+        width: 80%;
+        max-width: 800px;
+        height: 500px;
+        overflow-y: auto;
+        background: white;
+        border-radius: 12px;
+        padding: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .message {
+        margin: 5px 0;
+    }
+    .user {
+        color: #0288d1;
+        font-weight: bold;
+    }
+    .lunvo {
+        color: #fbc02d;
+        font-weight: bold;
+    }
+    #input-box {
+        display: flex;
+        margin-top: 10px;
+        width: 80%;
+        max-width: 800px;
+    }
+    input {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 8px 0 0 8px;
+        outline: none;
+    }
+    button {
+        padding: 10px 20px;
+        border: none;
+        background: #009688;
+        color: white;
+        font-weight: bold;
+        border-radius: 0 8px 8px 0;
+        cursor: pointer;
+    }
+    button:hover {
+        background: #00796b;
+    }
+</style>
+</head>
+<body>
+
+<h1>💬 Lunvo AI - Public Pre-Alpha</h1>
+<div id="chat-box"></div>
+
+<div id="input-box">
+    <input type="text" id="user-input" placeholder="Type your message... (use /name to set your name)">
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+let username = localStorage.getItem("lunvo_username") || "User";
+let chatHistory = JSON.parse(localStorage.getItem("lunvo_chatHistory") || "[]");
+const swearWords = ["fuck","shit","bitch","asshole","nigger","faggot"]; // just ignore
+
+function saveChat() {
+    localStorage.setItem("lunvo_chatHistory", JSON.stringify(chatHistory));
+}
+
+function renderChat() {
+    const chatBox = document.getElementById("chat-box");
+    chatBox.innerHTML = "";
+    chatHistory.forEach(msg => {
+        const div = document.createElement("div");
+        div.classList.add("message");
+        div.innerHTML = `<span class="${msg.sender}">${msg.sender === "user" ? username : "Lunvo"}:</span> ${msg.text}`;
+        chatBox.appendChild(div);
+    });
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function sendMessage() {
+    let input = document.getElementById("user-input").value.trim();
+    if (!input) return;
+
+    // Command to set name
+    if (input.startsWith("/name ")) {
+        username = input.substring(6).trim();
+        localStorage.setItem("lunvo_username", username);
+        chatHistory.push({sender:"lunvo", text:`Got it! I’ll call you ${username} from now on.`});
+        saveChat();
+        renderChat();
+        document.getElementById("user-input").value = "";
+        return;
+    }
+
+    // Remove swears completely
+    swearWords.forEach(word => {
+        const regex = new RegExp(`\\b${word}\\b`, "gi");
+        input = input.replace(regex, "");
+    });
+
+    chatHistory.push({sender:"user", text:input});
+    saveChat();
+    renderChat();
+    document.getElementById("user-input").value = "";
+
+    // Simulate Lunvo typing
+    setTimeout(() => {
+        let reply = fakeAIResponse(input);
+        chatHistory.push({sender:"lunvo", text:reply});
+        saveChat();
+        renderChat();
+    }, Math.random() * 800 + 500);
+}
+
+function fakeAIResponse(msg) {
+    const lower = msg.toLowerCase();
+    if (lower.includes("hello") || lower.includes("hi")) {
+        return `Hey ${username}! How’s your day going?`;
+    }
+    if (lower.includes("how are you")) {
+        return `I’m doing great, thanks for asking ${username}!`;
+    }
+    if (lower.includes("what is your name")) {
+        return "I’m Lunvo — your friendly offline AI assistant.";
+    }
+    return "Interesting… tell me more!";
+}
+
+// Load saved chat
+renderChat();
+</script>
+
+</body>
+</html>
